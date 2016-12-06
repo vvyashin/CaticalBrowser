@@ -34,7 +34,7 @@ namespace SubstituteProxy
         }
 
         /// <summary>
-        /// Loads html by http get request
+        /// Loads html page by http get request
         /// </summary>
         /// <param name="url">URL of page for loading</param>
         /// <param name="headers">Http headers</param>

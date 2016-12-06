@@ -13,11 +13,11 @@ namespace SubstituteProxy
             _random = new Random();
         }
 
-        public virtual string GetNextCatPicture(string picturesFolder)
+        public virtual Uri GetNextCatPicture(Uri picturesFolder)
         {
             if (picturesFolder == null) throw new ArgumentNullException(nameof(picturesFolder));
 
-            return $"{picturesFolder}/{_random.Next(PicturesNumber)}.jpg";
+            return new Uri(picturesFolder, $"{_random.Next(PicturesNumber)}.jpg"); 
         }
     }
 }

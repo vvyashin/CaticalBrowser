@@ -18,7 +18,7 @@ namespace WebUI.Tests
     public class BrowserControllerTests
     {
         public ISubstituteProxyService FakeSubstituteProxyService { get; set; }
-
+        
         [SetUp]
         public void SetupService()
         {
@@ -28,8 +28,14 @@ namespace WebUI.Tests
         private BrowserController CreateBrowserController()
         {
             var controller = new BrowserController(FakeSubstituteProxyService);
-            controller.ControllerContext = new ControllerContext(Substitute.For<HttpContextBase>(), new RouteData(), controller);
+            var httpContext = Substitute.For<HttpContextBase>();
+            var request = Substitute.For<HttpRequestBase>();
+            request.Url.Returns(new Uri("http://website.com"));
+            httpContext.Request.Returns(request);
 
+            controller.ControllerContext = new ControllerContext(httpContext, new RouteData(),
+                controller);
+            
             return controller;
         }
 
@@ -63,7 +69,7 @@ namespace WebUI.Tests
             var url = "http://website.com";
             var page = "Html page";
             FakeSubstituteProxyService.GetSubstitutePage(Arg.Is(url), Arg.Any<IHeaders>(),
-                Arg.Is("Content/CatPictures"), Arg.Is("/Page?url=")).Returns(Task.FromResult(page));
+                Arg.Any<Uri>(), Arg.Any<string>()).Returns(Task.FromResult(page));
             
             var viewResult = (ViewResult)browserController.Page(url).Result;
 
@@ -78,9 +84,8 @@ namespace WebUI.Tests
         {
             var browserController = CreateBrowserController();
             var url = "http://website.com";
-
             FakeSubstituteProxyService.GetSubstitutePage(Arg.Is(url), Arg.Any<IHeaders>(),
-                 Arg.Is("Content/CatPictures"), Arg.Is("/Page?url="))
+                 Arg.Any<Uri>(), Arg.Any<string>())
                  .Throws((Exception)Activator.CreateInstance(exceptionType, "message"));
 
             var viewResult = (ViewResult)browserController.Page(url).Result;
@@ -96,7 +101,7 @@ namespace WebUI.Tests
             var url = "http://website.com";
 
             FakeSubstituteProxyService.GetSubstitutePage(Arg.Is(url), Arg.Any<IHeaders>(),
-                 Arg.Is("Content/CatPictures"), Arg.Is("/Page?url=")).Throws(new Exception());
+                 Arg.Any<Uri>(), Arg.Any<string>()).Throws(new Exception());
 
             var viewResult = (ViewResult)browserController.Page(url).Result;
 
