@@ -61,13 +61,13 @@
     <Compile Include="WebPageReaderTests.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\src\SubstituteProxy\SubstituteProxy.csproj">
+      <Project>{1b5a0c9c-a43e-4d29-8536-167158acf306}</Project>
+      <Name>SubstituteProxy</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\src\WebUI\WebUI.csproj">
       <Project>{678d7093-efa0-4daa-9cc7-cd2c0427a06b}</Project>
       <Name>WebUI</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\SubstituteProxy\SubstituteProxy.csproj">
-      <Project>{1b5a0c9c-a43e-4d29-8536-167158acf306}</Project>
-      <Name>SubstituteProxy</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

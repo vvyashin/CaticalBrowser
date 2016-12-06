@@ -135,7 +135,7 @@
     <Folder Include="App_Data\" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\SubstituteProxy\SubstituteProxy.csproj">
+    <ProjectReference Include="..\SubstituteProxy\SubstituteProxy.csproj">
       <Project>{1b5a0c9c-a43e-4d29-8536-167158acf306}</Project>
       <Name>SubstituteProxy</Name>
     </ProjectReference>

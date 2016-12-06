@@ -51,7 +51,7 @@
     <Compile Include="WebPageReader.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\src\WebUI\WebUI.csproj">
+    <ProjectReference Include="..\WebUI\WebUI.csproj">
       <Project>{678d7093-efa0-4daa-9cc7-cd2c0427a06b}</Project>
       <Name>WebUI</Name>
     </ProjectReference>
