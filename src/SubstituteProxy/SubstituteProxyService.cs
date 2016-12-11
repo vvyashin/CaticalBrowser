@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using AngleSharp;
 using AngleSharp.Dom.Html;
 using AngleSharp.Extensions;
 using AngleSharp.Parser.Html;
@@ -43,22 +44,29 @@ namespace SubstituteProxy
             var uri = _uriBuilder.GetUri(url);
             var page = await _webPageReader.LoadPage(uri, headers);
 
-            var parser = new HtmlParser();
+            var config = Configuration.Default.WithJavaScript().WithCss();
+            var parser = new HtmlParser(config);
             var document = parser.Parse(page);
             
             SetBaseUri(url, document);
 
+            ReplaceRelativeHeadLinksWithAbsolute(document, uri);
             ReplaceLinksWithProxy(proxyPrefix, document, uri);
             ReplaceImagesWithCats(imageFolderUrl, document);
-            ReplaceRelativeHeadLinksWithAbsolute(document, uri);
-
-            return document.ToHtml();
+            
+            return document.DocumentElement.OuterHtml;
         }
 
         private void ReplaceImagesWithCats(Uri imageFolderUrl, IHtmlDocument document)
         {
             foreach (var element in document.QuerySelectorAll("img")) {
                 element.SetAttribute("src", $"{_catPicturesGenerator.GetNextCatPicture(imageFolderUrl)}");
+            }
+            foreach (var element in document.All) {
+                var image = element.ComputeCurrentStyle().BackgroundImage;
+                if (!String.IsNullOrWhiteSpace(image) && image.Contains("url")) {
+                    element.Style.BackgroundImage = $"url({_catPicturesGenerator.GetNextCatPicture(imageFolderUrl)})";
+                }
             }
         }
 

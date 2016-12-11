@@ -34,6 +34,14 @@ namespace SubstituteProxy.Tests
             return uri;
         }
 
+        private Uri SetNextCatPicture(string imageFolder)
+        {
+            var uri = new Uri("http://w1.ru/1.jpg");
+            CatPicturesGeneratorFake.GetNextCatPicture(Arg.Is(new Uri(imageFolder))).Returns(uri);
+
+            return uri;
+        }
+
         [Test]
         public void GetSubstitutePage_ReplaceLinksWithProxyLink()
         {
@@ -55,14 +63,15 @@ namespace SubstituteProxy.Tests
             var substituteProxyService = CreateSubstituteProxyService();
             var url = "http://www.website1.com";
             var uri = SetUrl(url);
-            CatPicturesGeneratorFake.GetNextCatPicture(Arg.Is(new Uri("http://w1.ru"))).Returns(new Uri("http://w1.ru/1.jpg"));
+            var imagePictureUrl = "http://w1.ru";
+            var imagePictureUri = SetNextCatPicture(imagePictureUrl);
             WebPageReaderFake.LoadPage(Arg.Is(uri), Arg.Any<IHeaders>()).Returns(
                 @"<html><head></head><body><div><img src=""/sky.jpg""><p><img src = ""/green.png""></p></div></body></html>");
 
             var html = substituteProxyService.GetSubstitutePage(url, Substitute.For<IHeaders>(), new Uri("http://w1.ru"), "proxyUrl").Result;
 
             html.Should().Be(
-                @"<html><head><base href=""http://www.website1.com""></head><body><div><img src=""http://w1.ru/1.jpg""><p><img src=""http://w1.ru/1.jpg""></p></div></body></html>");
+                $@"<html><head><base href=""http://www.website1.com""></head><body><div><img src=""{imagePictureUri}""><p><img src=""{imagePictureUri}""></p></div></body></html>");
         }
 
         [Test]
@@ -78,6 +87,40 @@ namespace SubstituteProxy.Tests
 
             html.Should().Be(
                 @"<html><head><link href=""http://www.website1.com/style.css""><base href=""http://www.website1.com""></head><body></body></html>");
+        }
+
+        [Test]
+        public void GetSubstringPage_ReplaceBackgroundImagesWithCatPictures()
+        {
+            var substituteProxyService = CreateSubstituteProxyService();
+            var url = "http://www.website1.com";
+            var uri = SetUrl(url);
+            var imagePictureUrl = "http://w1.ru";
+            var imagePictureUri = SetNextCatPicture(imagePictureUrl);
+            WebPageReaderFake.LoadPage(Arg.Is(uri), Arg.Any<IHeaders>()).Returns(
+                @"<html><head></head><body><div style=""background-image: url(/image.jpg);""></div></body></html>");
+
+            var html = substituteProxyService.GetSubstitutePage(url, Substitute.For<IHeaders>(), new Uri("http://w1.ru"), "proxyUrl").Result;
+
+            html.Should().Be(
+                $@"<html><head><base href=""http://www.website1.com""></head><body><div style=""background-image: url(&quot;{imagePictureUri}&quot;)""></div></body></html>");
+        }
+
+        [Test]
+        public void GetSubstringPage_ReplaceBackgroundImageFromCssWithCatPictures()
+        {
+            var substituteProxyService = CreateSubstituteProxyService();
+            var url = "http://www.website1.com";
+            var uri = SetUrl(url);
+            var imagePictureUrl = "http://w1.ru";
+            var imagePictureUri = SetNextCatPicture(imagePictureUrl);
+            WebPageReaderFake.LoadPage(Arg.Is(uri), Arg.Any<IHeaders>()).Returns(
+                @"<html><head><style>.bi{background-image: url(/image.jpg);}</style></head><body><div class=""bi""></div></body></html>");
+
+            var html = substituteProxyService.GetSubstitutePage(url, Substitute.For<IHeaders>(), new Uri("http://w1.ru"), "proxyUrl").Result;
+
+            html.Should().Be(
+                $@"<html><head><style>.bi{{background-image: url(/image.jpg);}}</style><base href=""http://www.website1.com""></head><body><div class=""bi"" style=""background-image: url(&quot;{imagePictureUri}&quot;)""></div></body></html>");
         }
     }
 }
