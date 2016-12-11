@@ -9,19 +9,29 @@ namespace SubstituteProxy.Tests
     [TestFixture]
     public class SubstituteProxyServiceTests
     {
-        public WebPageReader FakeWebPageReader { get; set; }
+        public WebPageReader WebPageReaderFake { get; set; }
         public CatPicturesGenerator CatPicturesGeneratorFake { get; set; }
+        public UriBuilder UriBuilderFake { get; set; }
 
         [SetUp]
         public void SetupFakes()
         {
-            FakeWebPageReader = Substitute.For<WebPageReader>();
+            WebPageReaderFake = Substitute.For<WebPageReader>();
             CatPicturesGeneratorFake = Substitute.For<CatPicturesGenerator>();
+            UriBuilderFake = Substitute.For<UriBuilder>();
         }
 
         private SubstituteProxyService CreateSubstituteProxyService()
         {
-            return new SubstituteProxyService(FakeWebPageReader, CatPicturesGeneratorFake);
+            return new SubstituteProxyService(WebPageReaderFake, CatPicturesGeneratorFake, UriBuilderFake);
+        }
+
+        private Uri SetUrl(string url)
+        {
+            var uri = new Uri(url);
+            UriBuilderFake.GetUri(Arg.Is(url)).Returns(uri);
+
+            return uri;
         }
 
         [Test]
@@ -29,7 +39,8 @@ namespace SubstituteProxy.Tests
         {
             var substituteProxyService = CreateSubstituteProxyService();
             var url = "http://www.website1.com";
-            FakeWebPageReader.LoadPage(Arg.Is(url), Arg.Any<IHeaders>()).Returns(
+            var uri = SetUrl(url);
+            WebPageReaderFake.LoadPage(Arg.Is(uri), Arg.Any<IHeaders>()).Returns(
                 @"<html><head></head><body><div><a href=""http://www.website1.com/""></a><p><a href = ""http://www.website2.com/""></a></p></div></body></html>");
 
             var html = substituteProxyService.GetSubstitutePage(url, Substitute.For<IHeaders>(), new Uri("http://w1.ru"), "/proxyPage?=").Result;
@@ -43,8 +54,9 @@ namespace SubstituteProxy.Tests
         {
             var substituteProxyService = CreateSubstituteProxyService();
             var url = "http://www.website1.com";
+            var uri = SetUrl(url);
             CatPicturesGeneratorFake.GetNextCatPicture(Arg.Is(new Uri("http://w1.ru"))).Returns(new Uri("http://w1.ru/1.jpg"));
-            FakeWebPageReader.LoadPage(Arg.Is(url), Arg.Any<IHeaders>()).Returns(
+            WebPageReaderFake.LoadPage(Arg.Is(uri), Arg.Any<IHeaders>()).Returns(
                 @"<html><head></head><body><div><img src=""/sky.jpg""><p><img src = ""/green.png""></p></div></body></html>");
 
             var html = substituteProxyService.GetSubstitutePage(url, Substitute.For<IHeaders>(), new Uri("http://w1.ru"), "proxyUrl").Result;
@@ -58,7 +70,8 @@ namespace SubstituteProxy.Tests
         {
             var substituteProxyService = CreateSubstituteProxyService();
             var url = "http://www.website1.com";
-            FakeWebPageReader.LoadPage(Arg.Is(url), Arg.Any<IHeaders>()).Returns(
+            var uri = SetUrl(url);
+            WebPageReaderFake.LoadPage(Arg.Is(uri), Arg.Any<IHeaders>()).Returns(
                 @"<html><head><link href=""style.css"" /></head><body></body></html>");
 
             var html = substituteProxyService.GetSubstitutePage(url, Substitute.For<IHeaders>(), new Uri("http://w1.ru"), "/proxyPage?=").Result;

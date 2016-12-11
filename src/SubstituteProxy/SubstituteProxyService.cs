@@ -11,14 +11,18 @@ namespace SubstituteProxy
     {
         private readonly WebPageReader _webPageReader;
         private readonly CatPicturesGenerator _catPicturesGenerator;
+        private readonly UriBuilder _uriBuilder;
 
-        public SubstituteProxyService(WebPageReader webPageReader, CatPicturesGenerator catPicturesGenerator)
+        public SubstituteProxyService(WebPageReader webPageReader, CatPicturesGenerator catPicturesGenerator,
+            UriBuilder uriBuilder)
         {
             if (webPageReader == null) throw new ArgumentNullException(nameof(webPageReader));
             if (catPicturesGenerator == null) throw new ArgumentNullException(nameof(catPicturesGenerator));
+            if (uriBuilder == null) throw new ArgumentNullException(nameof(uriBuilder));
 
             _webPageReader = webPageReader;
             _catPicturesGenerator = catPicturesGenerator;
+            _uriBuilder = uriBuilder;
         }
 
         /// <summary>
@@ -36,17 +40,17 @@ namespace SubstituteProxy
             if (imageFolderUrl == null) throw new ArgumentNullException(nameof(imageFolderUrl));
             if (proxyPrefix == null) throw new ArgumentNullException(nameof(proxyPrefix));
 
-            var page = await _webPageReader.LoadPage(url, headers);
+            var uri = _uriBuilder.GetUri(url);
+            var page = await _webPageReader.LoadPage(uri, headers);
 
             var parser = new HtmlParser();
             var document = parser.Parse(page);
             
             SetBaseUri(url, document);
 
-            var baseUri = new Uri(url, UriKind.Absolute);
-            ReplaceLinksWithProxy(proxyPrefix, document, baseUri);
+            ReplaceLinksWithProxy(proxyPrefix, document, uri);
             ReplaceImagesWithCats(imageFolderUrl, document);
-            ReplaceRelativeHeadLinksWithAbsolute(document, baseUri);
+            ReplaceRelativeHeadLinksWithAbsolute(document, uri);
 
             return document.ToHtml();
         }

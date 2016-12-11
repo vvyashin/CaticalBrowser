@@ -48,6 +48,7 @@
     <Compile Include="CatPicturesGenerator.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SubstituteProxyService.cs" />
+    <Compile Include="UriBuilder.cs" />
     <Compile Include="WebPageReader.cs" />
   </ItemGroup>
   <ItemGroup>
