@@ -40,7 +40,7 @@ namespace SubstituteProxy
             var uri = _uriBuilder.GetUri(url);
             var document = await _webPageReader.LoadPage(uri, headers);
             
-            SetBaseUri(url, document);
+            SetBaseUri(uri, document);
 
             ReplaceRelativeHeadLinksWithAbsolute(document, uri);
             ReplaceLinksWithProxy(proxyPrefix, document, uri);
@@ -51,9 +51,16 @@ namespace SubstituteProxy
 
         private void ReplaceImagesWithCats(IDocument document, Uri baseUri)
         {
+            foreach (var element in document.QuerySelectorAll("picture > source")) {
+                var image = _catPicturesGenerator.GetNextCatPicture(
+                    new Uri(baseUri, element.GetAttribute("src")).ToString());
+                element.SetAttribute("src", image);
+                element.RemoveAttribute("srcset");
+            }
             foreach (var htmlImageElement in document.Images) {
                 htmlImageElement.Source = _catPicturesGenerator.GetNextCatPicture(
                     new Uri(baseUri, htmlImageElement.Source).ToString());
+                htmlImageElement.RemoveAttribute("srcset");
             }
             foreach (var element in document.All) {
                 var image = element.ComputeCurrentStyle().BackgroundImage;
@@ -88,10 +95,10 @@ namespace SubstituteProxy
             }
         }
 
-        private void SetBaseUri(string url, IDocument document)
+        private void SetBaseUri(Uri uri, IDocument document)
         {
             var baseTag = document.CreateElement("base");
-            baseTag.SetAttribute("href", url);
+            baseTag.SetAttribute("href", uri.ToString());
             document.Head.AppendChild(baseTag);
         }
     }

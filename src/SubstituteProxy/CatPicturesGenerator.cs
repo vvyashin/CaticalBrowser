@@ -14,7 +14,7 @@ namespace SubstituteProxy
 
         private const int DefaultWidth = 500;
         private const int DefaultHeight = 300;
-        private const int MinNumber = 0;
+        private const int MinNumber = 1;
         private const int MaxNumber = 10;
         
         public virtual string GetNextCatPicture(string url)

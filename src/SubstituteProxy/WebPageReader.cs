@@ -26,8 +26,7 @@ namespace SubstituteProxy
             requester.Headers["Accept"] = headers.Accept;
             
             var config = Configuration.Default
-                .WithDefaultLoader(ldr => ldr.IsNavigationEnabled = true, 
-                    requesters: new IRequester[] { requester })
+                .WithDefaultLoader(requesters: new IRequester[] { requester })
                 .WithJavaScript()
                 .WithCss();
 

@@ -64,7 +64,7 @@ namespace SubstituteProxy.Tests
             var html = substituteProxyService.GetSubstitutePage(url, Substitute.For<IHeaders>(), "/proxyPage?=").Result;
 
             html.Should().Be(
-                @"<html><head><base href=""http://www.website1.com""></head><body><div><a href=""/proxyPage?=http://www.website1.com/""></a><p><a href=""/proxyPage?=http://www.website2.com/""></a></p></div></body></html>");
+                @"<html><head><base href=""http://www.website1.com/""></head><body><div><a href=""/proxyPage?=http://www.website1.com/""></a><p><a href=""/proxyPage?=http://www.website2.com/""></a></p></div></body></html>");
         }
 
         [Test]
@@ -80,7 +80,7 @@ namespace SubstituteProxy.Tests
             var html = substituteProxyService.GetSubstitutePage(url, Substitute.For<IHeaders>(), "proxyUrl").Result;
 
             html.Should().Be(
-                $@"<html><head><base href=""http://www.website1.com""></head><body><div><img src=""{imagePictureUri}""><p><img src=""{imagePictureUri}""></p></div></body></html>");
+                $@"<html><head><base href=""http://www.website1.com/""></head><body><div><img src=""{imagePictureUri}""><p><img src=""{imagePictureUri}""></p></div></body></html>");
         }
 
         [Test]
@@ -95,7 +95,7 @@ namespace SubstituteProxy.Tests
             var html = substituteProxyService.GetSubstitutePage(url, Substitute.For<IHeaders>(), "/proxyPage?=").Result;
 
             html.Should().Be(
-                @"<html><head><link href=""http://www.website1.com/style.css""><base href=""http://www.website1.com""></head><body></body></html>");
+                @"<html><head><link href=""http://www.website1.com/style.css""><base href=""http://www.website1.com/""></head><body></body></html>");
         }
 
         [Test]
@@ -111,7 +111,7 @@ namespace SubstituteProxy.Tests
             var html = substituteProxyService.GetSubstitutePage(url, Substitute.For<IHeaders>(), "proxyUrl").Result;
 
             html.Should().Be(
-                $@"<html><head><base href=""http://www.website1.com""></head><body><div style=""background-image: url(&quot;{imagePictureUri}&quot;)""></div></body></html>");
+                $@"<html><head><base href=""http://www.website1.com/""></head><body><div style=""background-image: url(&quot;{imagePictureUri}&quot;)""></div></body></html>");
         }
 
         [Test]
@@ -127,7 +127,39 @@ namespace SubstituteProxy.Tests
             var html = substituteProxyService.GetSubstitutePage(url, Substitute.For<IHeaders>(), "proxyUrl").Result;
 
             html.Should().Be(
-                $@"<html><head><style>.bi{{background-image: url(/image.jpg);}}</style><base href=""http://www.website1.com""></head><body><div class=""bi"" style=""background-image: url(&quot;{imagePictureUri}&quot;)""></div></body></html>");
+                $@"<html><head><style>.bi{{background-image: url(/image.jpg);}}</style><base href=""http://www.website1.com/""></head><body><div class=""bi"" style=""background-image: url(&quot;{imagePictureUri}&quot;)""></div></body></html>");
+        }
+
+        [Test]
+        public void GetSubstitutePage_IfSrcSetExists_SrcSetIsEmpty()
+        {
+            var substituteProxyService = CreateSubstituteProxyService();
+            var url = "http://www.website1.com";
+            var uri = SetUrl(url);
+            var imagePictureUri = SetNextCatPicture();
+            SetReturnPage(uri,
+                @"<html><head></head><body><div><img srcset=""/sky.jpg""></div></body></html>");
+
+            var html = substituteProxyService.GetSubstitutePage(url, Substitute.For<IHeaders>(), "proxyUrl").Result;
+
+            html.Should().Be(
+                $@"<html><head><base href=""http://www.website1.com/""></head><body><div><img src=""{imagePictureUri}""></div></body></html>");
+        }
+
+        [Test]
+        public void GetSubstitutePage_ReplacePicture()
+        {
+            var substituteProxyService = CreateSubstituteProxyService();
+            var url = "http://www.website1.com";
+            var uri = SetUrl(url);
+            var imagePictureUri = SetNextCatPicture();
+            SetReturnPage(uri,
+                @"<html><head></head><body><div><picture><source srcset=""/sky.jpg""></picture></div></body></html>");
+
+            var html = substituteProxyService.GetSubstitutePage(url, Substitute.For<IHeaders>(), "proxyUrl").Result;
+
+            html.Should().Be(
+                $@"<html><head><base href=""http://www.website1.com/""></head><body><div><picture><source src=""{imagePictureUri}""></picture></div></body></html>");
         }
     }
 }
