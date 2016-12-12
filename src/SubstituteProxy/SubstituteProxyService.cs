@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
-using AngleSharp;
-using AngleSharp.Dom.Html;
+using AngleSharp.Dom;
 using AngleSharp.Extensions;
-using AngleSharp.Parser.Html;
 using WebUI.Services;
 
 namespace SubstituteProxy
@@ -31,46 +29,42 @@ namespace SubstituteProxy
         /// </summary>
         /// <param name="url">Url of loading web site</param>
         /// <param name="headers">Headers of http request</param>
-        /// <param name="imageFolderUrl">Absolute url to folder with cat pictures</param>
         /// <param name="proxyPrefix">Proxy prefix for links</param>
         /// <returns>HTML page</returns>
-        public async Task<string> GetSubstitutePage(string url, IHeaders headers, Uri imageFolderUrl, string proxyPrefix)
+        public async Task<string> GetSubstitutePage(string url, IHeaders headers, string proxyPrefix)
         {
             if (url == null) throw new ArgumentNullException(nameof(url));
             if (headers == null) throw new ArgumentNullException(nameof(headers));
-            if (imageFolderUrl == null) throw new ArgumentNullException(nameof(imageFolderUrl));
             if (proxyPrefix == null) throw new ArgumentNullException(nameof(proxyPrefix));
 
             var uri = _uriBuilder.GetUri(url);
-            var page = await _webPageReader.LoadPage(uri, headers);
-
-            var config = Configuration.Default.WithJavaScript().WithCss();
-            var parser = new HtmlParser(config);
-            var document = parser.Parse(page);
+            var document = await _webPageReader.LoadPage(uri, headers);
             
             SetBaseUri(url, document);
 
             ReplaceRelativeHeadLinksWithAbsolute(document, uri);
             ReplaceLinksWithProxy(proxyPrefix, document, uri);
-            ReplaceImagesWithCats(imageFolderUrl, document);
+            ReplaceImagesWithCats(document, uri);
             
             return document.DocumentElement.OuterHtml;
         }
 
-        private void ReplaceImagesWithCats(Uri imageFolderUrl, IHtmlDocument document)
+        private void ReplaceImagesWithCats(IDocument document, Uri baseUri)
         {
-            foreach (var element in document.QuerySelectorAll("img")) {
-                element.SetAttribute("src", $"{_catPicturesGenerator.GetNextCatPicture(imageFolderUrl)}");
+            foreach (var htmlImageElement in document.Images) {
+                htmlImageElement.Source = _catPicturesGenerator.GetNextCatPicture(
+                    new Uri(baseUri, htmlImageElement.Source).ToString());
             }
             foreach (var element in document.All) {
                 var image = element.ComputeCurrentStyle().BackgroundImage;
                 if (!String.IsNullOrWhiteSpace(image) && image.Contains("url")) {
-                    element.Style.BackgroundImage = $"url({_catPicturesGenerator.GetNextCatPicture(imageFolderUrl)})";
+                    var uri = new Uri(baseUri, image.Replace("url", "").Trim(' ', '(', ')', '"', '\''));
+                    element.Style.BackgroundImage = $"url({_catPicturesGenerator.GetNextCatPicture(uri.ToString())})";
                 }
             }
         }
 
-        private void ReplaceLinksWithProxy(string proxyUrl, IHtmlDocument document, Uri baseUri)
+        private void ReplaceLinksWithProxy(string proxyUrl, IDocument document, Uri baseUri)
         {
             foreach (var element in document.QuerySelectorAll("a")) {
                 var href = element.GetAttribute("href");
@@ -79,7 +73,7 @@ namespace SubstituteProxy
             }
         }
 
-        private void ReplaceRelativeHeadLinksWithAbsolute(IHtmlDocument document, Uri baseUri)
+        private void ReplaceRelativeHeadLinksWithAbsolute(IDocument document, Uri baseUri)
         {
             foreach (var element in document.QuerySelectorAll("link")) {
                 var href = element.GetAttribute("href");
@@ -94,7 +88,7 @@ namespace SubstituteProxy
             }
         }
 
-        private void SetBaseUri(string url, IHtmlDocument document)
+        private void SetBaseUri(string url, IDocument document)
         {
             var baseTag = document.CreateElement("base");
             baseTag.SetAttribute("href", url);

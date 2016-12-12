@@ -1,6 +1,9 @@
 ﻿using System;
-using System.Net.Http;
 using System.Threading.Tasks;
+using AngleSharp;
+using AngleSharp.Dom;
+using AngleSharp.Network;
+using AngleSharp.Network.Default;
 using WebUI.Services;
 
 namespace SubstituteProxy
@@ -12,19 +15,23 @@ namespace SubstituteProxy
         /// </summary>
         /// <param name="uri">URL of page for loading</param>
         /// <param name="headers">Http headers</param>
-        /// <returns>Html code as string</returns>
-        public virtual async Task<string> LoadPage(Uri uri, IHeaders headers)
+        /// <returns>AngleSharp.IDocument</returns>
+        public virtual async Task<IDocument> LoadPage(Uri uri, IHeaders headers)
         {
             if (uri == null) throw new ArgumentNullException(nameof(uri));
             if (headers == null) throw new ArgumentNullException(nameof(headers));
 
-            using (var httpClient = new HttpClient()) {
-                httpClient.DefaultRequestHeaders.TryAddWithoutValidation("Accept", headers.Accept);
-                httpClient.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", headers.UserAgent);
+            var requester = new HttpRequester();
+            requester.Headers["User-Agent"] = headers.UserAgent;
+            requester.Headers["Accept"] = headers.Accept;
+            
+            var config = Configuration.Default
+                .WithDefaultLoader(ldr => ldr.IsNavigationEnabled = true, 
+                    requesters: new IRequester[] { requester })
+                .WithJavaScript()
+                .WithCss();
 
-                var response = await httpClient.GetAsync(uri);
-                return await response.Content.ReadAsStringAsync();
-            }
+            return await BrowsingContext.New(config).OpenAsync(uri.ToString());
         }
     }
 }

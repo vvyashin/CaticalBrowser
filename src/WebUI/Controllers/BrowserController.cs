@@ -36,11 +36,10 @@ namespace WebUI.Controllers
             else {
                 try {
                     var uriBase = HttpContext.Request.Url;
-                    var catPicturesUri = new Uri(uriBase, "Content/CatPictures/");
                     var proxyPrefix = new Uri(uriBase, "/Page?url=").ToString();
 
                     model.Content = await _substituteProxyService.GetSubstitutePage(
-                        url, new Headers(HttpContext), catPicturesUri, proxyPrefix);
+                        url, new Headers(HttpContext), proxyPrefix);
                 }
                 catch (UriFormatException ufe) {
                     model.Content = ufe.Message;
@@ -51,7 +50,7 @@ namespace WebUI.Controllers
                 catch (HttpRequestException rex) {
                     model.Content = rex.Message;
                 }
-                catch (Exception) {
+                catch (Exception e) {
                     model.Content = "Something went wrong while displaying this webpage";
                 }
             }

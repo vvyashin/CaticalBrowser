@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net;
 
 namespace SubstituteProxy
 {
@@ -6,18 +7,34 @@ namespace SubstituteProxy
     {
         private readonly Random _random;
 
-        private const int PicturesNumber = 5;
-
         public CatPicturesGenerator()
         {
             _random = new Random();
         }
 
-        public virtual Uri GetNextCatPicture(Uri picturesFolder)
+        private const int DefaultWidth = 500;
+        private const int DefaultHeight = 300;
+        private const int MinNumber = 0;
+        private const int MaxNumber = 10;
+        
+        public virtual string GetNextCatPicture(string url)
         {
-            if (picturesFolder == null) throw new ArgumentNullException(nameof(picturesFolder));
+            int width, height;
+            try {
+                WebRequest request = WebRequest.Create(url);
+                using (WebResponse response = request.GetResponse()) {
+                    var image = System.Drawing.Image.FromStream(response.GetResponseStream());
 
-            return new Uri(picturesFolder, $"{_random.Next(PicturesNumber)}.jpg"); 
+                    width = image.Width;
+                    height = image.Height;
+                }
+            }
+            catch (Exception) {
+                width = DefaultWidth;
+                height = DefaultHeight;
+            }
+            
+            return new Uri($"http://lorempixel.com/{width}/{height}/cats/{_random.Next(MinNumber, MaxNumber)}").ToString();
         }
     }
 }
