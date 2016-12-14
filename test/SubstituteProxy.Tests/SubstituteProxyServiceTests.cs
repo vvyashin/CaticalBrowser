@@ -84,21 +84,6 @@ namespace SubstituteProxy.Tests
         }
 
         [Test]
-        public void GetSubstitutePage_ReplaceRelativeCssUriWithAbsoluteUri()
-        {
-            var substituteProxyService = CreateSubstituteProxyService();
-            var url = "http://www.website1.com";
-            var uri = SetUrl(url);
-            SetReturnPage(uri,
-                @"<html><head><link href=""style.css"" /></head><body></body></html>");
-
-            var html = substituteProxyService.GetSubstitutePage(url, Substitute.For<IHeaders>(), "/proxyPage?=").Result;
-
-            html.Should().Be(
-                @"<html><head><link href=""http://www.website1.com/style.css""><base href=""http://www.website1.com/""></head><body></body></html>");
-        }
-
-        [Test]
         public void GetSubstringPage_ReplaceBackgroundImagesWithCatPictures()
         {
             var substituteProxyService = CreateSubstituteProxyService();
@@ -127,7 +112,7 @@ namespace SubstituteProxy.Tests
             var html = substituteProxyService.GetSubstitutePage(url, Substitute.For<IHeaders>(), "proxyUrl").Result;
 
             html.Should().Be(
-                $@"<html><head><style>.bi{{background-image: url(/image.jpg);}}</style><base href=""http://www.website1.com/""></head><body><div class=""bi"" style=""background-image: url(&quot;{imagePictureUri}&quot;)""></div></body></html>");
+                $@"<html><head><base href=""http://www.website1.com/""><style>.bi{{background-image: url(/image.jpg);}}</style></head><body><div class=""bi"" style=""background-image: url(&quot;{imagePictureUri}&quot;)""></div></body></html>");
         }
 
         [Test]

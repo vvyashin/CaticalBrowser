@@ -42,7 +42,6 @@ namespace SubstituteProxy
             
             SetBaseUri(uri, document);
 
-            ReplaceRelativeHeadLinksWithAbsolute(document, uri);
             ReplaceLinksWithProxy(proxyPrefix, document, uri);
             ReplaceImagesWithCats(document, uri);
             
@@ -79,27 +78,13 @@ namespace SubstituteProxy
                 element.SetAttribute("href", $"{proxyUrl}{absoluteUri}");
             }
         }
-
-        private void ReplaceRelativeHeadLinksWithAbsolute(IDocument document, Uri baseUri)
-        {
-            foreach (var element in document.QuerySelectorAll("link")) {
-                var href = element.GetAttribute("href");
-                var absoluteUri = new Uri(baseUri, href);
-                element.SetAttribute("href", absoluteUri.ToString());
-            }
-
-            foreach (var element in document.QuerySelectorAll("script")) {
-                var href = element.GetAttribute("src");
-                var absoluteUri = new Uri(baseUri, href);
-                element.SetAttribute("src", absoluteUri.ToString());
-            }
-        }
-
+        
         private void SetBaseUri(Uri uri, IDocument document)
         {
             var baseTag = document.CreateElement("base");
             baseTag.SetAttribute("href", uri.ToString());
-            document.Head.AppendChild(baseTag);
+            var firstChild = document.Head.FirstChild;
+            document.Head.InsertBefore(baseTag, firstChild);
         }
     }
 }
